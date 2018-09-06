@@ -10,11 +10,46 @@
 
 var fs = require('fs');
 var Promise = require('bluebird');
+var octokit = require('@octokit/rest');
 
 
 
-var fetchProfileAndWriteToFile = function(readFilePath, writeFilePath) {
+var fetchProfileAndWriteToFile = function (readFilePath, writeFilePath) {
   // TODO
+  console.log('octokit: ', octokit);
+  return new Promise(function (resolve, reject) {
+    fs.readFile(readFilePath, function (err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        let body = '';
+        body += data;
+        body = body.split('\n');
+        resolve(body[0]);
+      }
+    });
+  }).then(function (githubUserName) {
+    console.log('githubUserName: ', githubUserName);
+    return new Promise(function (resolve, reject) {
+
+      // TODO: FIX GITHUB API SEARCH SYNTAX
+
+      octokit.search.users({ q: githubUserName }, function (err, res) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
+  }).then(function (githubProfile) {
+    var profile = JSON.parse(githubProfile);
+    fs.writeFile(writeFilePath, function(err) {
+      if (err) {
+        throw new Error('Error writing file');
+      }
+    });
+  });
 };
 
 // Export these functions so we can test them
