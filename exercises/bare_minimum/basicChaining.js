@@ -10,13 +10,11 @@
 
 var fs = require('fs');
 var Promise = require('bluebird');
-var octokit = require('@octokit/rest');
-
-
+var request = require('request');
 
 var fetchProfileAndWriteToFile = function (readFilePath, writeFilePath) {
   // TODO
-  console.log('octokit: ', octokit);
+  //console.log('octokit: ', Octokit);
   return new Promise(function (resolve, reject) {
     fs.readFile(readFilePath, function (err, data) {
       if (err) {
@@ -29,29 +27,51 @@ var fetchProfileAndWriteToFile = function (readFilePath, writeFilePath) {
       }
     });
   }).then(function (githubUserName) {
-    console.log('githubUserName: ', githubUserName);
     return new Promise(function (resolve, reject) {
+      var options = {
+        url: 'https://api.github.com/users/' + githubUserName,
+        headers: { 'User-Agent': 'request' },
+        json: true  // will JSON.parse(body) for us
+      };
 
-      // TODO: FIX GITHUB API SEARCH SYNTAX
-
-      octokit.search.users({ q: githubUserName }, function (err, res) {
+      request.get(options, function (err, res, body) {
         if (err) {
           reject(err);
+        } else if (body.message) {
+          reject(new Error('Failed to get GitHub profile: ' + body.message));
         } else {
-          resolve(res);
+          resolve(body);
         }
       });
-    });
-  }).then(function (githubProfile) {
-    var profile = JSON.parse(githubProfile);
-    fs.writeFile(writeFilePath, function(err) {
-      if (err) {
-        throw new Error('Error writing file');
-      }
+      // Octokit.search.users({ q: 'danthareja' }, function (err, res) {
+      //   console.log('res: ', JSON.parse(res));
+      //   var profile = JSON.parse(githubProfile);
+      //   fs.writeFile(writeFilePath, profile, function (err) {
+      //     if (err) {
+      //       throw new Error('Error writing file');
+      //     }
+      //   });
+      //   if (err) {
+      //     console.log('line 39 err: ', err);
+      //     reject(err);
+      //   } else {
+      //     console.log('res: ', res);
+      //     resolve(res);
+      //   }
+      // });
+      // });
+    }).then(function (githubProfile) {
+      var profile = JSON.stringify(githubProfile);
+      fs.writeFileSync(writeFilePath, profile, function (err) {
+        if (err) {
+          throw new Error('Error writing file');
+        }
+      });
+    }).catch(function (err) {
+      console.error('Catch error here.', err);
     });
   });
 };
-
 // Export these functions so we can test them
 module.exports = {
   fetchProfileAndWriteToFile: fetchProfileAndWriteToFile
