@@ -31,7 +31,8 @@ var fetchProfileAndWriteToFile = function (readFilePath, writeFilePath) {
       var options = {
         url: 'https://api.github.com/users/' + githubUserName,
         headers: { 'User-Agent': 'request' },
-        json: true  // will JSON.parse(body) for us
+        // will JSON.parse(body) for us
+        json: true
       };
 
       request.get(options, function (err, res, body) {
